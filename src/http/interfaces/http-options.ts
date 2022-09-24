@@ -1,6 +1,5 @@
-import * as $ from '../types/http-method';
+import {HttpMethod} from '../types/http-method';
 
-import {HttpMethod} from '../enums/http-method';
 import {HttpHeaders} from '../types/http-headers';
 
 /**
@@ -16,7 +15,7 @@ export interface HttpOptions extends RequestInit {
   /**
    * Contains the HTTP request method.
    */
-  method?: HttpMethod | $.HttpMethod;
+  method?: HttpMethod;
 
   /**
    * Contains the HTTP request headers.

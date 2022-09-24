@@ -1,4 +1,3 @@
-import {HttpMethod} from './enums/http-method';
 import {
   HttpDeleteOptions,
   HttpGetOptions,
@@ -6,13 +5,6 @@ import {
   HttpPostOptions,
   HttpPutOptions,
 } from './interfaces/http-options';
-
-/**
- * Represents the simplest type of object of the JavaScript language.
- */
-export type PlainObject<T = any> = {
-  [key: string]: T
-};
 
 /**
  * Provides an injectable service for performing HTTP requests using the
@@ -36,7 +28,7 @@ export class HttpClient {
   /**
    * @see `HttpClient.cancel()`
    */
-  public abort(): void {
+  abort(): void {
     this.cancel();
   }
 
@@ -44,7 +36,7 @@ export class HttpClient {
    * Sets the AbortSignal's `aborted` flag and signal to any observers
    * that the associated activity is to be aborted.
    */
-  public cancel(): void {
+  cancel(): void {
     // abort the current request
     this.controller.abort('HTTP request was cancelled!');
 
@@ -60,10 +52,10 @@ export class HttpClient {
    * the request.
    * @return {Promise} the HTTP response given by the server.
    */
-  private async request<TData extends PlainObject>(
+  private async request<T>(
       uri: string,
       options?: HttpOptions,
-  ): Promise<TData> {
+  ): Promise<T> {
     // add the aborting signalizer to the HTTP request settings
     const requestOptions: HttpOptions = {
       ...options,
@@ -96,15 +88,15 @@ export class HttpClient {
    * @param {String} url Contains the url of the resource to be deleted.
    * @param {HttpDeleteOptions} options Contains the custom settings applied
    * to the request.
-   * @return {Promise<TData>} the deleted object.
+   * @return {Promise<T>} the deleted object.
    */
-  public async deleteAsync<TData extends PlainObject>(
+  async delete<T>(
       url: string,
       options?: HttpDeleteOptions,
-  ): Promise<TData> {
+  ): Promise<T> {
     const requestOptions: HttpOptions = {
       ...options,
-      method: HttpMethod.DELETE,
+      method: 'DELETE',
     };
 
     return await this.request(url, requestOptions);
@@ -116,15 +108,15 @@ export class HttpClient {
    * @param {String} url Contains the url of the resource to be gotten.
    * @param {HttpGetOptions} options Contains the custom settings applied
    * to the GET request.
-   * @return {Promise<TData>} the object gotten.
+   * @return {Promise<T>} the object gotten.
    */
-  public async getAsync<TData extends PlainObject>(
+  async get<T>(
       url: string,
       options?: HttpGetOptions,
-  ): Promise<TData> {
+  ): Promise<T> {
     const requestOptions: HttpOptions = {
       ...options,
-      method: HttpMethod.DELETE,
+      method: 'GET',
     };
 
     return await this.request(url, requestOptions);
@@ -137,13 +129,13 @@ export class HttpClient {
    * @param {*} body Contains the body of the POST request.
    * @param {HttpPostOptions} options Contains the custom settings applied to
    * the POST request.
-   * @return {Promise<TData>} the object posted to the server.
+   * @return {Promise<T>} the object posted to the server.
    */
-  public async postAsync<TData extends PlainObject>(
+  async post<T>(
     url: string,
     body: any | null,
     options?: HttpPostOptions
-  ): Promise<TData>;
+  ): Promise<T>;
   /**
    * Sends an HTTP Post request to the server.
    *
@@ -151,24 +143,16 @@ export class HttpClient {
    * @param {*} body Contains the body of the POST request.
    * @param {HttpPostOptions} options Contains the custom settings applied to
    * the POST request.
-   * @return {Promise<TData>} the object posted to the server.
+   * @return {Promise<T>} the object posted to the server.
    */
-  public async postAsync<TData extends PlainObject>(
+  async post<T>(
       url: string,
-      body: TData extends undefined ? never : TData | any | null,
+      body: T extends undefined ? never : T | any | null,
       options?: HttpPostOptions,
-  ): Promise<TData> {
+  ): Promise<T> {
     const requestOptions: HttpOptions = {
       ...options,
-      // @todo Note:
-      // Regarding the default headers of the service it is still unclear which
-      // headers will be added to the HTTP request by default.
-      //
-      headers: options?.headers ?? {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-      method: HttpMethod.POST,
+      method: 'POST',
       body,
     };
 
@@ -182,13 +166,13 @@ export class HttpClient {
    * @param {*} body Contains the body of the PUT request.
    * @param {HttpPutOptions} options Contains the custom settings applied to
    * the PUT request.
-   * @return {Promise<TData>} the object which was replaced.
+   * @return {Promise<T>} the object which was replaced.
    */
-  public async putAsync<TData extends PlainObject>(
+  async put<T>(
     url: string,
     body: any | null,
     options?: HttpPutOptions
-  ): Promise<TData>;
+  ): Promise<T>;
   /**
    * Sends an HTTP Put request to the server.
    *
@@ -196,16 +180,16 @@ export class HttpClient {
    * @param {*} body Contains the body of the PUT request.
    * @param {HttpPutOptions} options Contains the custom settings applied to
    * the PUT request.
-   * @return {Promise<TData>} the object which was replaced.
+   * @return {Promise<T>} the object which was replaced.
    */
-  public async putAsync<TData extends PlainObject>(
+  async put<T>(
       url: string,
-      body: TData extends undefined ? never : TData | any | null,
+      body: T extends undefined ? never : T | any | null,
       options?: HttpPutOptions,
-  ): Promise<TData> {
+  ): Promise<T> {
     const requestOptions: HttpOptions = {
       ...options,
-      method: HttpMethod.PUT,
+      method: 'PUT',
       body,
     };
 
