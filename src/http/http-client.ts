@@ -4,7 +4,7 @@ import {
   HttpOptions,
   HttpPostOptions,
   HttpPutOptions,
-} from './interfaces/http-options';
+} from './http-options';
 
 /**
  * Provides an injectable service for performing HTTP requests using the

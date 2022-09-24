@@ -1,6 +1,6 @@
-import {HttpMethod} from '../types/http-method';
+import {HttpMethod} from './http-method';
 
-import {HttpHeaders} from '../types/http-headers';
+import {HttpHeaders} from './http-headers';
 
 /**
  * Represents the object with settings applied to a given HTTP request.
