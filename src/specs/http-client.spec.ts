@@ -1,0 +1,3 @@
+test('HttpClient', () => {
+  expect('').toBe('');
+});
