@@ -1,3 +1,4 @@
+import {GET} from './http-decorators';
 import {
   HttpDeleteOptions,
   HttpGetOptions,
@@ -24,6 +25,50 @@ export class HttpClient {
    * `AbortController` object.
    */
   private readonly signal: AbortSignal = this.controller.signal;
+
+  /**
+   * Contains the list of experimental HTTP request headers.
+   */
+  private static readonly experimentalHeaders: ReadonlyArray<string> = [
+    'Device-Memory',
+    'Downlink',
+    'Early-Data',
+    'ECT',
+    'NEL',
+    'RTT',
+    'Save-Data',
+    'Sec-CH-UA',
+    'Sec-CH-UA-Arch',
+    'Sec-CH-UA-Bitness',
+    'Sec-CH-UA-Full-Version-List',
+    'Sec-CH-UA-Mobile',
+    'Sec-CH-UA-Model',
+    'Sec-CH-UA-Platform',
+    'Sec-CH-UA-Platform-Version',
+    'Sec-GPC',
+    'X-DNS-Prefetch-Control',
+    'X-Forwarded-For',
+    'X-Forwarded-Host',
+    'X-Forwarded-Proto',
+    'X-XSS-Protection',
+  ];
+
+  /**
+   * Contains the list of deprecated HTTP request headers.
+   */
+  private static readonly deprecatedHeaders: ReadonlyArray<string> = [
+    'Accept-CH-Lifetime',
+    'Content-DPR',
+    'DNT',
+    'DPR',
+    'Large-Allocation',
+    'Pragma',
+    'Sec-CH-UA-Full-Version',
+    'Tk',
+    'Viewport-Width',
+    'Warning',
+    'Width',
+  ];
 
   /**
    * @see `HttpClient.cancel()`
@@ -62,6 +107,26 @@ export class HttpClient {
       signal: this.signal,
     };
 
+    const headers = requestOptions.headers;
+    if (headers) {
+      const keys = Object.keys(headers);
+      const deprecated = keys
+          .filter((key: string) => HttpClient.deprecatedHeaders.includes(key));
+      console.warn(`'${
+        deprecated.join('\', ')
+      }' ${
+        deprecated.length > 1 ? 'are' : 'is'
+      } deprecated HTTP request headers.`);
+
+      const experimental = keys
+          .filter((key) => HttpClient.experimentalHeaders.includes(key));
+      console.warn(`'${
+        experimental.join('\', ')
+      }' ${
+        experimental.length > 1 ? 'are' : 'is'
+      } experimental HTTP request headers.`);
+    }
+
     try {
       // here the function waits for the settlement of the `fetch()` method,
       // the call of which will either return a `Response` or throw an error
@@ -85,13 +150,13 @@ export class HttpClient {
   /**
    * Sends an HTTP Delete request to the server.
    *
-   * @param {String} url Contains the url of the resource to be deleted.
+   * @param {String} uri Contains the uri of the resource to be deleted.
    * @param {HttpDeleteOptions} options Contains the custom settings applied
    * to the request.
    * @return {Promise<T>} the deleted object.
    */
   async delete<T>(
-      url: string,
+      uri: string,
       options?: HttpDeleteOptions,
   ): Promise<T> {
     const requestOptions: HttpOptions = {
@@ -99,19 +164,20 @@ export class HttpClient {
       method: 'DELETE',
     };
 
-    return await this.request(url, requestOptions);
+    return await this.request(uri, requestOptions);
   }
 
   /**
    * Sends an HTTP Get request to the server.
    *
-   * @param {String} url Contains the url of the resource to be gotten.
+   * @param {String} uri Contains the uri of the resource to be gotten.
    * @param {HttpGetOptions} options Contains the custom settings applied
    * to the GET request.
    * @return {Promise<T>} the object gotten.
    */
+  @GET
   async get<T>(
-      url: string,
+      uri: string,
       options?: HttpGetOptions,
   ): Promise<T> {
     const requestOptions: HttpOptions = {
@@ -119,34 +185,34 @@ export class HttpClient {
       method: 'GET',
     };
 
-    return await this.request(url, requestOptions);
+    return await this.request(uri, requestOptions);
   }
 
   /**
    * Sends an HTTP Post request to the server.
    *
-   * @param {String} url Contains the url of the resource to be posted.
+   * @param {String} uri Contains the uri of the resource to be posted.
    * @param {*} body Contains the body of the POST request.
    * @param {HttpPostOptions} options Contains the custom settings applied to
    * the POST request.
    * @return {Promise<T>} the object posted to the server.
    */
   async post<T>(
-    url: string,
+    uri: string,
     body: any | null,
     options?: HttpPostOptions
   ): Promise<T>;
   /**
    * Sends an HTTP Post request to the server.
    *
-   * @param {String} url Contains the url of the resource to be posted.
+   * @param {String} uri Contains the uri of the resource to be posted.
    * @param {*} body Contains the body of the POST request.
    * @param {HttpPostOptions} options Contains the custom settings applied to
    * the POST request.
    * @return {Promise<T>} the object posted to the server.
    */
   async post<T>(
-      url: string,
+      uri: string,
       body: T extends undefined ? never : T | any | null,
       options?: HttpPostOptions,
   ): Promise<T> {
@@ -156,34 +222,34 @@ export class HttpClient {
       body,
     };
 
-    return await this.request(url, requestOptions);
+    return await this.request(uri, requestOptions);
   }
 
   /**
    * Sends an HTTP Put request to the server.
    *
-   * @param {String} url Contains the url of the resource to be replaced.
+   * @param {String} uri Contains the uri of the resource to be replaced.
    * @param {*} body Contains the body of the PUT request.
    * @param {HttpPutOptions} options Contains the custom settings applied to
    * the PUT request.
    * @return {Promise<T>} the object which was replaced.
    */
   async put<T>(
-    url: string,
+    uri: string,
     body: any | null,
     options?: HttpPutOptions
   ): Promise<T>;
   /**
    * Sends an HTTP Put request to the server.
    *
-   * @param {String} url Contains the url of the resource to be replaced.
+   * @param {String} uri Contains the uri of the resource to be replaced.
    * @param {*} body Contains the body of the PUT request.
    * @param {HttpPutOptions} options Contains the custom settings applied to
    * the PUT request.
    * @return {Promise<T>} the object which was replaced.
    */
   async put<T>(
-      url: string,
+      uri: string,
       body: T extends undefined ? never : T | any | null,
       options?: HttpPutOptions,
   ): Promise<T> {
@@ -193,6 +259,6 @@ export class HttpClient {
       body,
     };
 
-    return await this.request(url, requestOptions);
+    return await this.request(uri, requestOptions);
   }
 }
