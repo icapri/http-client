@@ -26,6 +26,10 @@
     "url": "https://github.com/i-kapri/http-client/issues"
   },
   "homepage": "https://github.com/i-kapri/http-client#readme",
+  "dependencies": {
+    "@circinus/validators": "^1.0.1",
+    "node-fetch": "^3.3.0"
+  },
   "devDependencies": {
     "@types/jest": "^29.0.3",
     "@typescript-eslint/eslint-plugin": "^5.38.0",
@@ -38,5 +42,6 @@
   },
   "files": [
     "lib/**/*"
-  ]
+  ],
+  "type": "module"
 }

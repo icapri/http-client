@@ -1,4 +1,2 @@
-export * from './http/http-options';
-export * from './http/http-headers';
-export * from './http/http-method';
-export * from './http/http-client';
+export * from './http/HttpHeaders';
+export * from './http/HttpMethod';

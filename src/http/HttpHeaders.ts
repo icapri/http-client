@@ -1,7 +1,7 @@
 /**
- * Represents all the of HTTP headers.
+ * Represents the existing HTTP headers.
  */
-export type HttpHeaders =
+type HttpExistingHeader =
   | 'Accept'
   | 'Accept-CH'
   | 'Accept-CH-Lifetime' // Deprecated!
@@ -121,3 +121,10 @@ export type HttpHeaders =
   | 'X-Forwarded-Proto' // Experimental!
   | 'X-Frame-Options'
   | 'X-XSS-Protection'; // Experimental!
+
+type HttpExistingHeaders = Record<HttpExistingHeader, string>;
+type HttpCustomHeaders = Record<string, string>;
+
+type HttpHeaders = HttpExistingHeaders | HttpCustomHeaders;
+
+export type { HttpHeaders };
