@@ -1,4 +1,4 @@
-import {HttpClient} from '..';
+import { HttpClient } from '../http';
 
 const baseUrl = 'https://swapi.dev/api/';
 

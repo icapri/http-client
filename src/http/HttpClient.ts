@@ -1,9 +1,21 @@
 import { createAugmentedError } from '../utils';
+import { AbortionError } from './AbortionError';
 import { AugmentedError } from './AugmentedError';
 import { HttpRequestBody } from './HttpRequestBody';
-import { HttpRequestOptions } from './HttpRequestOptions';
+import {
+  HttpDeleteOptions,
+  HttpGetOptions,
+  HttpHeadOptions,
+  HttpOptions,
+  HttpPatchOptions,
+  HttpPostOptions,
+  HttpPutOptions,
+  HttpRequestOptions,
+} from './HttpRequestOptions';
 
 export class HttpClient {
+  private static readonly DONE_STATE: number = 4;
+
   private lastRequest?: XMLHttpRequest;
 
   private readonly requests: XMLHttpRequest[] = [];
@@ -12,61 +24,61 @@ export class HttpClient {
     this.lastRequest?.abort();
   }
 
-  async delete<T extends any>(url: string | URL, options?: HttpRequestOptions): Promise<T> {
-    options ||= { method: 'DELETE' };
-    return await this.request<T>(url, options);
+  async delete<T extends any>(url: string | URL, options?: HttpDeleteOptions): Promise<T> {
+    const o: HttpRequestOptions = { ...options, method: 'DELETE' };
+    return await this.request<T>(url, o);
   }
 
-  async get<T extends any | any[] = never>(url: string | URL, options?: HttpRequestOptions): Promise<T> {
-    options ||= { method: 'GET' };
-    return await this.request<T>(url, options);
+  async get<T extends any | any[] = never>(url: string | URL, options?: HttpGetOptions): Promise<T> {
+    const o: HttpRequestOptions = { ...options, method: 'GET' };
+    return await this.request<T>(url, o);
   }
 
-  async head<T extends any = never>(url: string | URL, options?: HttpRequestOptions): Promise<T> {
-    options ||= { method: 'HEAD' };
-    return await this.request(url, options);
+  async head<T extends any = never>(url: string | URL, options?: HttpHeadOptions): Promise<T> {
+    const o: HttpRequestOptions = { ...options, method: 'HEAD' };
+    return await this.request(url, o);
   }
 
-  async options<T extends any = never>(url: string | URL, options?: HttpRequestOptions): Promise<T> {
-    options ||= { method: 'OPTIONS' };
-    return await this.request(url, options);
+  async options<T extends any = never>(url: string | URL, options?: HttpOptions): Promise<T> {
+    const o: HttpRequestOptions = { ...options, method: 'OPTIONS' };
+    return await this.request(url, o);
   }
 
   async patch<T extends any = never>(
     url: string | URL,
     body?: HttpRequestBody,
-    options?: HttpRequestOptions
+    options?: HttpPatchOptions
   ): Promise<T> {
-    options ||= { method: 'PATCH' };
-    options.body = body;
-    return await this.request(url, options);
+    const o: HttpRequestOptions = { ...options, method: 'PATCH', body };
+    return await this.request(url, o);
   }
 
   async post<T extends any>(
     url: string | URL,
     body?: HttpRequestBody,
-    options?: HttpRequestOptions,
+    options?: HttpPostOptions
   ): Promise<T> {
-    options ||= { method: 'POST' };
-    options.body = body;
-    return await this.request(url, options);
+    const o: HttpRequestOptions = { ...options, method: 'POST', body };
+    return await this.request(url, o);
   }
 
   async put<T extends any>(
     url: string | URL,
     body?: HttpRequestBody,
-    options?: HttpRequestOptions,
+    options?: HttpPutOptions
   ): Promise<T> {
-    options ||= { method: 'PUT' };
-    options.body = body;
-    return await this.request(url, options);
+    const o: HttpRequestOptions = { ...options, method: 'PUT', body };
+    return await this.request(url, o);
   }
 
   private async request<T>(url: string | URL, options: HttpRequestOptions): Promise<T> {
-    const request = new XMLHttpRequest();
-    this.requests.push(request);
-    this.lastRequest = request;
     return new Promise<T>(function (resolve, reject: (reason?: AugmentedError) => void) {
+      // stringify the URL for different usage cases
+      const _url = typeof url === 'string' ? url : url.toString();
+      if (options.signal && options.signal.aborted) {
+        return reject(new AbortionError({ url: _url }));
+      }
+      const request = new XMLHttpRequest();
       request.open(options.method, url, true);
       request.onload = function () {
         if (request.status >= 200 && request.status < 300) {
@@ -77,13 +89,28 @@ export class HttpClient {
         }
       };
       request.onerror = function () {
-        request.abort();
         reject(createAugmentedError(request));
       };
       if (options.headers) {
         Object
           .entries(options.headers)
           .forEach(([key, value]) => request.setRequestHeader(key, value));
+      }
+      request.onabort = function() {
+        reject(new AbortionError({ url: _url }));
+      };
+
+      function abortListener() {
+        request.abort();
+      }
+
+      if (options.signal) {
+        options.signal.addEventListener('aborted', abortListener);
+        request.onreadystatechange = function() {
+          if (request.readyState === HttpClient.DONE_STATE) {
+            options.signal?.removeEventListener('aborted', abortListener);
+          }
+        };
       }
 
       request.withCredentials = options.withCredentials || false;
@@ -93,7 +120,6 @@ export class HttpClient {
       }
 
       request.ontimeout = function () {
-        request.abort();
         reject(createAugmentedError(request));
       };
       const responseType = options.responseType;
