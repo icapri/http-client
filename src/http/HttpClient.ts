@@ -16,14 +16,6 @@ import {
 export class HttpClient {
   private static readonly DONE_STATE: number = 4;
 
-  private lastRequest?: XMLHttpRequest;
-
-  private readonly requests: XMLHttpRequest[] = [];
-
-  abort(): void {
-    this.lastRequest?.abort();
-  }
-
   async delete<T extends any>(url: string | URL, options?: HttpDeleteOptions): Promise<T> {
     const o: HttpRequestOptions = { ...options, method: 'DELETE' };
     return await this.request<T>(url, o);
