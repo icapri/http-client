@@ -6,7 +6,7 @@ import {
   HttpDeleteOptions,
   HttpGetOptions,
   HttpHeadOptions,
-  HttpOptions,
+  HttpOptionsOptions,
   HttpPatchOptions,
   HttpPostOptions,
   HttpPutOptions,
@@ -31,7 +31,7 @@ export class HttpClient {
     return await this.request(url, o);
   }
 
-  async options<T extends any = never>(url: string | URL, options?: HttpOptions): Promise<T> {
+  async options<T extends any = never>(url: string | URL, options?: HttpOptionsOptions): Promise<T> {
     const o: HttpRequestOptions = { ...options, method: 'OPTIONS' };
     return await this.request(url, o);
   }
@@ -71,7 +71,13 @@ export class HttpClient {
         return reject(new AbortionError({ url: _url }));
       }
       const request = new XMLHttpRequest();
-      request.open(options.method, url, true);
+      request.open(
+        options.method,
+        url,
+        true,
+        options.credentials?.username,
+        options.credentials?.password
+      );
       request.onload = function () {
         if (request.status >= 200 && request.status < 300) {
           resolve(request.response);
@@ -96,14 +102,23 @@ export class HttpClient {
         request.abort();
       }
 
-      if (options.signal) {
-        options.signal.addEventListener('aborted', abortListener);
-        request.onreadystatechange = function() {
-          if (request.readyState === HttpClient.DONE_STATE) {
-            options.signal?.removeEventListener('aborted', abortListener);
-          }
-        };
+      function progressListener(e: ProgressEvent<EventTarget>) {
+        console.log('%cINFO: ', 'color: #007acc;', `${e.loaded} bytes transferred...`);
       }
+
+      if (options.reportProgress) {
+        request.addEventListener('progress', progressListener);
+      }
+
+      options.signal?.addEventListener('aborted', abortListener);
+      request.onreadystatechange = function() {
+        if (request.readyState === HttpClient.DONE_STATE) {
+          options.signal?.removeEventListener('aborted', abortListener);
+          if (options.reportProgress) {
+            request.removeEventListener('progress', progressListener);
+          }
+        }
+      };
 
       request.withCredentials = options.withCredentials || false;
       const timeout = options.timeout;
