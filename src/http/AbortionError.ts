@@ -3,7 +3,7 @@ import { HttpHeaders } from './HttpHeaders';
 import { HttpStatusCode } from './HttpStatusCode';
 
 export class AbortionError extends AugmentedError {
-  readonly name = 'AbortError';
+  readonly name = 'AbortionError';
   readonly message;
 
   constructor(init: {

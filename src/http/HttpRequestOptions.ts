@@ -10,9 +10,9 @@ export interface HttpRequestOptions {
   body?: HttpRequestBody;
   credentials?: HttpRequestCredentials;
   headers?: HttpHeaders;
+  logProgress?: boolean;
   method: HttpMethod;
   params?: HttpParams;
-  reportProgress?: boolean;
   responseType?: HttpResponseType;
   signal?: AbortionSignal;
   timeout?: number;

@@ -1,6 +1,7 @@
-import { createAugmentedError } from '../utils';
+import { isEmptyObject, isString } from '../utils';
 import { AbortionError } from './AbortionError';
 import { AugmentedError } from './AugmentedError';
+import { HttpHelper } from './HttpHelper';
 import { HttpRequestBody } from './HttpRequestBody';
 import {
   HttpDeleteOptions,
@@ -13,7 +14,7 @@ import {
   HttpRequestOptions,
 } from './HttpRequestOptions';
 
-export class HttpClient {
+export class HttpClient extends HttpHelper {
   private static readonly DONE_STATE: number = 4;
 
   async delete<T extends any>(url: string | URL, options?: HttpDeleteOptions): Promise<T> {
@@ -63,39 +64,37 @@ export class HttpClient {
     return await this.request(url, o);
   }
 
-  private async request<T>(url: string | URL, options: HttpRequestOptions): Promise<T> {
+  private async request<T>(requestUrl: string | URL, options: HttpRequestOptions): Promise<T> {
+    // stringify the URL for different usage cases
+    let url = isString(requestUrl) ? requestUrl : requestUrl.toString();
+    if (options.params && !isEmptyObject(options.params)) {
+      const params = '?'.concat(HttpHelper.buildParams(options.params));
+      url = url.concat(params);
+    }
+
     return new Promise<T>(function (resolve, reject: (reason?: AugmentedError) => void) {
-      // stringify the URL for different usage cases
-      const _url = typeof url === 'string' ? url : url.toString();
       if (options.signal && options.signal.aborted) {
-        return reject(new AbortionError({ url: _url }));
+        reject(new AbortionError({ url }));
       }
+
       const request = new XMLHttpRequest();
-      request.open(
-        options.method,
-        url,
-        true,
-        options.credentials?.username,
-        options.credentials?.password
-      );
+      HttpHelper.openRequest(url, request, options);
       request.onload = function () {
-        if (request.status >= 200 && request.status < 300) {
+        const isDone = request.readyState === HttpClient.DONE_STATE;
+        const isOkay = request.status >= 200 && request.status < 300;
+        if (isDone && isOkay) {
           resolve(request.response);
         } else {
-          request.abort();
-          reject(createAugmentedError(request));
+          reject(HttpHelper.createAugmentedError(request));
         }
       };
+
       request.onerror = function () {
-        reject(createAugmentedError(request));
+        reject(HttpHelper.createAugmentedError(request));
       };
-      if (options.headers) {
-        Object
-          .entries(options.headers)
-          .forEach(([key, value]) => request.setRequestHeader(key, value));
-      }
+
       request.onabort = function() {
-        reject(new AbortionError({ url: _url }));
+        reject(new AbortionError({ url }));
       };
 
       function abortListener() {
@@ -106,7 +105,9 @@ export class HttpClient {
         console.log('%cINFO: ', 'color: #007acc;', `${e.loaded} bytes transferred...`);
       }
 
-      if (options.reportProgress) {
+      HttpHelper.setOptions(request, options);
+
+      if (options.logProgress) {
         request.addEventListener('progress', progressListener);
       }
 
@@ -114,23 +115,16 @@ export class HttpClient {
       request.onreadystatechange = function() {
         if (request.readyState === HttpClient.DONE_STATE) {
           options.signal?.removeEventListener('aborted', abortListener);
-          if (options.reportProgress) {
+          if (options.logProgress) {
             request.removeEventListener('progress', progressListener);
           }
         }
       };
 
-      request.withCredentials = options.withCredentials || false;
-      const timeout = options.timeout;
-      if (timeout) {
-        request.timeout = timeout;
-      }
-
       request.ontimeout = function () {
-        reject(createAugmentedError(request));
+        reject(HttpHelper.createAugmentedError(request));
       };
-      const responseType = options.responseType;
-      request.responseType = responseType || 'json';
+
       const body = options.body;
       if (body && !['GET', 'HEAD'].includes(options.method)) {
         request.send(body);
