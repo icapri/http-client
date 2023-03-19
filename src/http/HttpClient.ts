@@ -1,4 +1,4 @@
-import { isEmptyObject, isString } from '../utils';
+import { Validator } from '../utils';
 import { AbortionError } from './AbortionError';
 import { AugmentedError } from './AugmentedError';
 import { HttpHelper } from './HttpHelper';
@@ -66,8 +66,8 @@ export class HttpClient extends HttpHelper {
 
   private async request<T>(requestUrl: string | URL, options: HttpRequestOptions): Promise<T> {
     // stringify the URL for different usage cases
-    let url = isString(requestUrl) ? requestUrl : requestUrl.toString();
-    if (options.params && !isEmptyObject(options.params)) {
+    let url = Validator.isString(requestUrl) ? requestUrl : requestUrl.toString();
+    if (options.params && !Validator.isEmptyObject(options.params)) {
       const params = '?'.concat(HttpHelper.buildParams(options.params));
       url = url.concat(params);
     }

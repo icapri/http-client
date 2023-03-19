@@ -1,4 +1,4 @@
-import { isArray } from '../utils';
+import { Validator } from '../utils';
 import { AugmentedError } from './AugmentedError';
 import { HttpHeaders } from './HttpHeaders';
 import { HttpParams } from './HttpParams';
@@ -9,7 +9,7 @@ export abstract class HttpHelper {
     return Object.entries(params).map(([key, value]) => {
       const encodedKey = encodeURIComponent(key);
       let encodedVal: string | undefined;
-      if (isArray(value)) {
+      if (Validator.isArray(value)) {
         encodedVal = value.map(v => encodeURIComponent(v)).join(',');
       } else {
         encodedVal = encodeURIComponent(value);
@@ -57,12 +57,6 @@ export abstract class HttpHelper {
     );
   }
 
-  protected static setHeaders(request: XMLHttpRequest, headers: HttpHeaders): void {
-    Object
-      .entries(headers)
-      .forEach(([key, value]) => request.setRequestHeader(key, value));
-  }
-
   protected static setOptions(request: XMLHttpRequest, options: HttpRequestOptions): void {
     request.withCredentials = options.withCredentials || false;
     const timeout = options.timeout;
@@ -76,5 +70,11 @@ export abstract class HttpHelper {
 
     const responseType = options.responseType;
     request.responseType = responseType || 'json';
+  }
+
+  private static setHeaders(request: XMLHttpRequest, headers: HttpHeaders): void {
+    Object
+      .entries(headers)
+      .forEach(([key, value]) => request.setRequestHeader(key, value));
   }
 }
