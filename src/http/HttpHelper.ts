@@ -5,20 +5,6 @@ import { HttpParams } from './HttpParams';
 import { HttpRequestOptions } from './HttpRequestOptions';
 
 export abstract class HttpHelper {
-  protected static buildParams(params: HttpParams): string {
-    return Object.entries(params).map(([key, value]) => {
-      const encodedKey = encodeURIComponent(key);
-      let encodedVal: string | undefined;
-      if (Validator.isArray(value)) {
-        encodedVal = value.map(v => encodeURIComponent(v)).join(',');
-      } else {
-        encodedVal = encodeURIComponent(value);
-      }
-
-      return `${encodedKey}=${encodedVal}`;
-    }).join('&');
-  }
-
   protected static createAugmentedError(request: XMLHttpRequest): AugmentedError {
     const rawHeaders = request.getAllResponseHeaders();
     const headers = rawHeaders.trim().split(/[\r\n]+/);
@@ -55,6 +41,20 @@ export abstract class HttpHelper {
       options.credentials?.username,
       options.credentials?.password
     );
+  }
+
+  protected static queryParams(params: HttpParams): string {
+    return Object.entries(params).map(([key, value]) => {
+      const encodedKey = encodeURIComponent(key);
+      let encodedVal: string | undefined;
+      if (Validator.isArray(value)) {
+        encodedVal = value.map(v => encodeURIComponent(v)).join(',');
+      } else {
+        encodedVal = encodeURIComponent(value);
+      }
+
+      return `${encodedKey}=${encodedVal}`;
+    }).join('&');
   }
 
   protected static setOptions(request: XMLHttpRequest, options: HttpRequestOptions): void {

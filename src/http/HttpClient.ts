@@ -68,7 +68,7 @@ export class HttpClient extends HttpHelper {
     // stringify the URL for different usage cases
     let url = Validator.isString(requestUrl) ? requestUrl : requestUrl.toString();
     if (options.params && !Validator.isEmptyObject(options.params)) {
-      const params = '?'.concat(HttpHelper.buildParams(options.params));
+      const params = '?'.concat(HttpHelper.queryParams(options.params));
       url = url.concat(params);
     }
 
